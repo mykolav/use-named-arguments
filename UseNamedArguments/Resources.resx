@@ -118,11 +118,11 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AnalyzerDescription" xml:space="preserve">
-    <value>Methods which have parameters of the same type must be invoked with named arguments.</value>
+    <value>Methods which have parameters of the same type should be invoked with named arguments.</value>
     <comment>An optional longer localizable description of the diagnostic.</comment>
   </data>
   <data name="AnalyzerMessageFormat" xml:space="preserve">
-    <value>Method '{0}' should be invoked with named arguments because parameters {1} have the same type</value>
+    <value>'{0}' should be invoked with named arguments as parameters {1} have the same type</value>
     <comment>The format-able message the diagnostic displays.</comment>
   </data>
   <data name="AnalyzerTitle" xml:space="preserve">

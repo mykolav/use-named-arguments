@@ -62,7 +62,7 @@ namespace UseNamedArguments {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Methods which have parameters of the same type must be invoked with named arguments..
+        ///   Looks up a localized string similar to Methods which have parameters of the same type should be invoked with named arguments..
         /// </summary>
         internal static string AnalyzerDescription {
             get {
@@ -71,7 +71,7 @@ namespace UseNamedArguments {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Method &apos;{0}&apos; should be invoked with named arguments because parameters {1} have the same type.
+        ///   Looks up a localized string similar to &apos;{0}&apos; should be invoked with named arguments as parameters {1} have the same type.
         /// </summary>
         internal static string AnalyzerMessageFormat {
             get {
