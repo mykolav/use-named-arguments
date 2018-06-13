@@ -181,21 +181,21 @@ namespace UseNamedArguments.Tests
 
             VerifyCSharpDiagnostic(testCodeSnippet, expectedDiagnostic);
 
-            //var fixtest = @"
-            //using System;
-            //using System.Collections.Generic;
-            //using System.Linq;
-            //using System.Text;
-            //using System.Threading.Tasks;
-            //using System.Diagnostics;
+            const string fixedCodeSnippet = @"
+                namespace Frobnitz
+                {
+                    class Wombat
+                    {
+                        void Gork(string fileName, int line, int column) {}
+                        void Bork()
+                        {
+                            Gork(""Gizom.cs"", line: 9000, column: 1);
+                        }
+                    }
+                }
+            ";
 
-            //namespace ConsoleApplication1
-            //{
-            //    class TYPENAME
-            //    {   
-            //    }
-            //}";
-            //VerifyCSharpFix(test, fixtest);
+            VerifyCSharpFix(testCodeSnippet, fixedCodeSnippet);
         }
     }
 }

@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
@@ -87,58 +85,17 @@ namespace UseNamedArguments
                 return;
             }
 
-            var argumentSyntaxesByType = new Dictionary<ITypeSymbol, List<ArgumentSyntaxAndParameterSymbol>>();
-            foreach (var argumentSyntax in invocationExpressionSyntax.ArgumentList.Arguments)
-            {
-                var argumentInfo = semanticModel.GetArgumentInfo(argumentSyntax);
-                if (argumentInfo.IsEmpty)
-                    throw new InvalidOperationException($"Could not find the corresponding parameter for [{argumentSyntax}]");
+            var invocationExpressionSyntaxInfo = InvocationExpressionSyntaxInfo.From(
+                semanticModel,
+                invocationExpressionSyntax);
 
-                if (!argumentSyntaxesByType.TryGetValue(argumentInfo.Parameter.Type, out var argumentSyntaxes))
-                {
-                    argumentSyntaxes = new List<ArgumentSyntaxAndParameterSymbol>();
-                    argumentSyntaxesByType.Add(argumentInfo.Parameter.Type, argumentSyntaxes);
-                }
-
-                argumentSyntaxes.Add(
-                    new ArgumentSyntaxAndParameterSymbol(
-                        argumentSyntax, 
-                        argumentInfo.Parameter)
-                );
-            }
-
-            var argumentsOfSameTypeByType = new List<(
-                ITypeSymbol typeSymbol, 
-                List<ArgumentSyntaxAndParameterSymbol> arguments)>();
-
-            foreach (var argumentsOfSameType in argumentSyntaxesByType)
-            {
-                if (argumentsOfSameType.Value.Count(it => it.Argument.NameColon == null) <= 1)
-                    continue;
-
-                var argumentNamesSameAsParameterNamesCount = 0;
-                foreach (var argument in argumentsOfSameType.Value)
-                {
-                    if (argument.Argument.Expression is IdentifierNameSyntax identifierNameSyntax &&
-                        argument.Parameter.Name == identifierNameSyntax.Identifier.ValueText)
-                    {
-                        ++argumentNamesSameAsParameterNamesCount;
-                    }
-                }
-
-                if (argumentNamesSameAsParameterNamesCount == argumentsOfSameType.Value.Count)
-                    continue;
-
-                argumentsOfSameTypeByType.Add((argumentsOfSameType.Key, argumentsOfSameType.Value));
-            }
-
-
-            if (!argumentsOfSameTypeByType.Any())
+            if (!invocationExpressionSyntaxInfo.ArgumentsWhichShouldBeNamed.Any())
                 return;
 
             var sbArgumentsOfSameTypeDescriptions = new StringBuilder();
             var argumentsOfSameTypeSeparator = "";
-            foreach (var argumentsOfSameType in argumentsOfSameTypeByType)
+            foreach (var argumentsOfSameType in 
+                invocationExpressionSyntaxInfo.ArgumentsWhichShouldBeNamed)
             {
                 var argumentsOfSameTypeDescription = string.Join(
                     ", ", 
