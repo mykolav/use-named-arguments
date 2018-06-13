@@ -107,9 +107,31 @@ namespace UseNamedArguments
                 );
             }
 
-            var argumentsOfSameTypeByType = argumentSyntaxesByType
-                .Where(argumentsOfSameType => argumentsOfSameType.Value.Count(it => it.Argument.NameColon == null) > 1)
-                .ToList();
+            var argumentsOfSameTypeByType = new List<(
+                ITypeSymbol typeSymbol, 
+                List<ArgumentSyntaxAndParameterSymbol> arguments)>();
+
+            foreach (var argumentsOfSameType in argumentSyntaxesByType)
+            {
+                if (argumentsOfSameType.Value.Count(it => it.Argument.NameColon == null) <= 1)
+                    continue;
+
+                var argumentNamesSameAsParameterNamesCount = 0;
+                foreach (var argument in argumentsOfSameType.Value)
+                {
+                    if (argument.Argument.Expression is IdentifierNameSyntax identifierNameSyntax &&
+                        argument.Parameter.Name == identifierNameSyntax.Identifier.ValueText)
+                    {
+                        ++argumentNamesSameAsParameterNamesCount;
+                    }
+                }
+
+                if (argumentNamesSameAsParameterNamesCount == argumentsOfSameType.Value.Count)
+                    continue;
+
+                argumentsOfSameTypeByType.Add((argumentsOfSameType.Key, argumentsOfSameType.Value));
+            }
+
 
             if (!argumentsOfSameTypeByType.Any())
                 return;
@@ -120,7 +142,7 @@ namespace UseNamedArguments
             {
                 var argumentsOfSameTypeDescription = string.Join(
                     ", ", 
-                    argumentsOfSameType.Value.Select(it => $"'{it.Parameter.Name}'"));
+                    argumentsOfSameType.arguments.Select(it => $"'{it.Parameter.Name}'"));
 
                 sbArgumentsOfSameTypeDescriptions
                     .Append(argumentsOfSameTypeSeparator)
