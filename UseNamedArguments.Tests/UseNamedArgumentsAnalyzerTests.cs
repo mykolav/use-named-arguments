@@ -64,7 +64,7 @@ namespace UseNamedArguments.Tests
         public void Method_with_variable_number_of_params_does_not_trigger_diagnostic()
         {
             var testCodeSnippet = @"
-                namespace Frobnitz
+                namespace Frobnitz`
                 {
                     class Wombat
                     {

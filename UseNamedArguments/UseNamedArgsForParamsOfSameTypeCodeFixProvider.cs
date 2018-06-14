@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
+using UseNamedArguments.Support;
 
 namespace UseNamedArguments
 {
@@ -66,23 +67,24 @@ namespace UseNamedArguments
                 semanticModel,
                 invocationExpressionSyntax);
 
-            var argumentsWhichShouldBeNamed = invocationExpressionSyntaxInfo
+            var ordinalOfFirstNamedArgument = invocationExpressionSyntaxInfo
                 .ArgumentsWhichShouldBeNamed
-                .SelectMany(argumentsByType => argumentsByType.arguments);
+                .SelectMany(argumentsByType => argumentsByType.arguments)
+                .Min(argAndParam => argAndParam.Parameter.Ordinal);
 
             var originalArgumentList = invocationExpressionSyntax.ArgumentList;
             var newArgumentSyntaxes = new List<ArgumentSyntax>();
             foreach (var originalArgument in originalArgumentList.Arguments)
             {
-                ArgumentSyntax newArgument = originalArgument;
+                var newArgument = originalArgument;
 
-                var argumentAndParam = argumentsWhichShouldBeNamed.FirstOrDefault(
-                    shouldBeNamed => shouldBeNamed.Argument == originalArgument);
-
-                if (argumentAndParam != null)
-                {
+                var argumentInfo = semanticModel.GetArgumentInfoOrThrow(originalArgument);
+                if (argumentInfo.Parameter.Ordinal >= ordinalOfFirstNamedArgument)
+                { 
                     newArgument = originalArgument.WithNameColon(
-                        SyntaxFactory.NameColon(argumentAndParam.Parameter.Name.ToIdentifierName())
+                        SyntaxFactory.NameColon(
+                            argumentInfo.Parameter.Name.ToIdentifierName()
+                        )
                     );
                 }
 
