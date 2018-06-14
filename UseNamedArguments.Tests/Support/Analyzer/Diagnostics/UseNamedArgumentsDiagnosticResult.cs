@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
 
-namespace UseNamedArguments.Tests.Helpers
+namespace UseNamedArguments.Tests.Support.Analyzer.Diagnostics
 {
     internal static class UseNamedArgumentsDiagnosticResult
     {

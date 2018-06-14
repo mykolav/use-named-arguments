@@ -1,7 +1,7 @@
 using System;
 using Microsoft.CodeAnalysis;
 
-namespace UseNamedArguments.Tests.Helpers
+namespace UseNamedArguments.Tests.Support.Analyzer.Diagnostics
 {
     /// <summary>
     /// Location where the diagnostic appears, as determined by path, line number, and column number.
@@ -36,22 +36,17 @@ namespace UseNamedArguments.Tests.Helpers
     public struct DiagnosticResult
     {
         private DiagnosticResultLocation[] locations;
-
         public DiagnosticResultLocation[] Locations
         {
             get
             {
-                if (this.locations == null)
-                {
-                    this.locations = new DiagnosticResultLocation[] { };
-                }
-                return this.locations;
+                if (locations == null)
+                    locations = new DiagnosticResultLocation[] { };
+
+                return locations;
             }
 
-            set
-            {
-                this.locations = value;
-            }
+            set => this.locations = value;
         }
 
         public DiagnosticSeverity Severity { get; set; }
@@ -60,28 +55,10 @@ namespace UseNamedArguments.Tests.Helpers
 
         public string Message { get; set; }
 
-        public string Path
-        {
-            get
-            {
-                return this.Locations.Length > 0 ? this.Locations[0].Path : "";
-            }
-        }
+        public string Path => Locations.Length > 0 ? Locations[0].Path : "";
 
-        public int Line
-        {
-            get
-            {
-                return this.Locations.Length > 0 ? this.Locations[0].Line : -1;
-            }
-        }
+        public int Line => Locations.Length > 0 ? Locations[0].Line : -1;
 
-        public int Column
-        {
-            get
-            {
-                return this.Locations.Length > 0 ? this.Locations[0].Column : -1;
-            }
-        }
+        public int Column => Locations.Length > 0 ? Locations[0].Column : -1;
     }
 }

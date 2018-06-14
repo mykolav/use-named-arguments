@@ -56,18 +56,6 @@ namespace UseNamedArguments
                 SyntaxKind.ObjectCreationExpression);
         }
 
-        private class ArgumentSyntaxAndParameterSymbol
-        {
-            public ArgumentSyntaxAndParameterSymbol(ArgumentSyntax argument, IParameterSymbol parameter)
-            {
-                Argument = argument;
-                Parameter = parameter;
-            }
-
-            public ArgumentSyntax Argument { get; }
-            public IParameterSymbol Parameter { get; }
-        }
-
         public void AnalyzeInvocationOrObjectCreationExpressionNode(SyntaxNodeAnalysisContext context)
         {
             var semanticModel = context.SemanticModel;

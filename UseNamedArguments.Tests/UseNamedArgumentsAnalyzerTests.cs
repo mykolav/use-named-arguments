@@ -1,22 +1,11 @@
-using Microsoft.CodeAnalysis.CodeFixes;
-using Microsoft.CodeAnalysis.Diagnostics;
-using UseNamedArguments.Tests.Helpers;
+using UseNamedArguments.Tests.Support;
+using UseNamedArguments.Tests.Support.Analyzer.Diagnostics;
 using Xunit;
 
 namespace UseNamedArguments.Tests
 {
-    public class UseNamedArgumentsTests : CodeFixVerifier
+    public class UseNamedArgumentsAnalyzerTests
     {
-        protected override CodeFixProvider GetCSharpCodeFixProvider()
-        {
-            return new UseNamedArgsForParamsOfSameTypeCodeFixProvider();
-        }
-
-        protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
-        {
-            return new UseNamedArgsForParamsOfSameTypeAnalyzer();
-        }
-
         [Fact]
         public void Empty_code_does_not_trigger_diagnostic()
         {
@@ -24,7 +13,7 @@ namespace UseNamedArguments.Tests
 
             //No diagnostics expected to show up
             var emptyExpectedDiagnostics = new DiagnosticResult[] { };
-            VerifyCSharpDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
         }
 
         [Fact]
@@ -46,7 +35,7 @@ namespace UseNamedArguments.Tests
 
             //No diagnostics expected to show up
             var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
-            VerifyCSharpDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
         }
 
         [Fact]
@@ -68,7 +57,29 @@ namespace UseNamedArguments.Tests
 
             //No diagnostics expected to show up
             var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
-            VerifyCSharpDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+        }
+
+        [Fact]
+        public void Method_with_variable_number_of_params_does_not_trigger_diagnostic()
+        {
+            var testCodeSnippet = @"
+                namespace Frobnitz
+                {
+                    class Wombat
+                    {
+                        void Gork(int line, int column, params string[] diagnosticMessages) {}
+                        void Bork()
+                        {
+                            Gork(9000, 1, ""Goku"");
+                        }
+                    }
+                }
+            ";
+
+            //No diagnostics expected to show up
+            var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
+            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
         }
 
         [Fact]
@@ -89,7 +100,7 @@ namespace UseNamedArguments.Tests
             ";
 
             var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
-            VerifyCSharpDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
         }
 
         [Fact]
@@ -105,14 +116,14 @@ namespace UseNamedArguments.Tests
                         {
                             var line = 9000;
                             var column = 1;
-                            Gork(fileName: ""Gizom.cs"", line, column);
+                            Gork(fileName: ""Gizmo.cs"", line, column);
                         }
                     }
                 }
             ";
 
             var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
-            VerifyCSharpDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
         }
 
         [Fact]
@@ -126,14 +137,14 @@ namespace UseNamedArguments.Tests
                         void Gork(string fileName, int line, int column) {}
                         void Bork()
                         {
-                            Gork(fileName: ""Gizom.cs"", line: 9000, column: 1);
+                            Gork(fileName: ""Gizmo.cs"", line: 9000, column: 1);
                         }
                     }
                 }
             ";
 
             var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
-            VerifyCSharpDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
         }
 
         [Fact]
@@ -147,14 +158,14 @@ namespace UseNamedArguments.Tests
                         void Gork(string fileName, int line, int column) {}
                         void Bork()
                         {
-                            Gork(""Gizom.cs"", line: 9000, column: 1);
+                            Gork(""Gizmo.cs"", line: 9000, column: 1);
                         }
                     }
                 }
             ";
 
             var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
-            VerifyCSharpDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
         }
 
         [Fact]
@@ -168,7 +179,7 @@ namespace UseNamedArguments.Tests
                         void Gork(string fileName, int line, int column) {}
                         void Bork()
                         {
-                            Gork(""Gizom.cs"", 9000, 1);
+                            Gork(""Gizmo.cs"", 9000, 1);
                         }
                     }
                 }
@@ -179,23 +190,7 @@ namespace UseNamedArguments.Tests
                 new [] { new [] { "line", "column" } },
                 new DiagnosticResultLocation("Test0.cs", line: 9, column: 29));
 
-            VerifyCSharpDiagnostic(testCodeSnippet, expectedDiagnostic);
-
-            const string fixedCodeSnippet = @"
-                namespace Frobnitz
-                {
-                    class Wombat
-                    {
-                        void Gork(string fileName, int line, int column) {}
-                        void Bork()
-                        {
-                            Gork(""Gizom.cs"", line: 9000, column: 1);
-                        }
-                    }
-                }
-            ";
-
-            VerifyCSharpFix(testCodeSnippet, fixedCodeSnippet);
+            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, expectedDiagnostic);
         }
     }
 }

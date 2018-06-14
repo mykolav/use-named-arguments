@@ -6,34 +6,17 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Formatting;
+using UseNamedArguments.Tests.Support.Analyzer;
 using Xunit;
 
-namespace UseNamedArguments.Tests
+namespace UseNamedArguments.Tests.Support.CodeFix
 {
     /// <summary>
     /// Superclass of all Unit tests made for diagnostics with codefixes.
     /// Contains methods used to verify correctness of codefixes
     /// </summary>
-    public abstract partial class CodeFixVerifier : DiagnosticVerifier
+    public static class CodeFixRunnerAndVerifier
     {
-        /// <summary>
-        /// Returns the codefix being tested (C#) - to be implemented in non-abstract class
-        /// </summary>
-        /// <returns>The CodeFixProvider to be used for CSharp code</returns>
-        protected virtual CodeFixProvider GetCSharpCodeFixProvider()
-        {
-            return null;
-        }
-
-        /// <summary>
-        /// Returns the codefix being tested (VB) - to be implemented in non-abstract class
-        /// </summary>
-        /// <returns>The CodeFixProvider to be used for VisualBasic code</returns>
-        protected virtual CodeFixProvider GetBasicCodeFixProvider()
-        {
-            return null;
-        }
-
         /// <summary>
         /// Called to test a C# codefix when applied on the inputted string as a source
         /// </summary>
@@ -41,9 +24,22 @@ namespace UseNamedArguments.Tests
         /// <param name="newSource">A class in the form of a string after the CodeFix was applied to it</param>
         /// <param name="codeFixIndex">Index determining which codefix to apply if there are multiple</param>
         /// <param name="allowNewCompilerDiagnostics">A bool controlling whether or not the test will fail if the CodeFix introduces other warnings after being applied</param>
-        protected void VerifyCSharpFix(string oldSource, string newSource, int? codeFixIndex = null, bool allowNewCompilerDiagnostics = false)
+        public static void InvokeAndVerifyCSharpFix(
+            CodeFixProvider cSharpCodeFixProvider,
+            DiagnosticAnalyzer cSharpAnalyzer,
+            string oldSource, 
+            string newSource, 
+            int? codeFixIndex = null, 
+            bool allowNewCompilerDiagnostics = false)
         {
-            VerifyFix(LanguageNames.CSharp, GetCSharpDiagnosticAnalyzer(), GetCSharpCodeFixProvider(), oldSource, newSource, codeFixIndex, allowNewCompilerDiagnostics);
+            InvokeAndVerifyFix(
+                LanguageNames.CSharp, 
+                cSharpAnalyzer, 
+                cSharpCodeFixProvider, 
+                oldSource, 
+                newSource, 
+                codeFixIndex, 
+                allowNewCompilerDiagnostics);
         }
 
         /// <summary>
@@ -53,9 +49,22 @@ namespace UseNamedArguments.Tests
         /// <param name="newSource">A class in the form of a string after the CodeFix was applied to it</param>
         /// <param name="codeFixIndex">Index determining which codefix to apply if there are multiple</param>
         /// <param name="allowNewCompilerDiagnostics">A bool controlling whether or not the test will fail if the CodeFix introduces other warnings after being applied</param>
-        protected void VerifyBasicFix(string oldSource, string newSource, int? codeFixIndex = null, bool allowNewCompilerDiagnostics = false)
+        public static void InvokeAndVerifyBasicFix(
+            CodeFixProvider visualBasicCodeFixProvider,
+            DiagnosticAnalyzer visualBasicAnalyzer,
+            string oldSource, 
+            string newSource, 
+            int? codeFixIndex = null,
+            bool allowNewCompilerDiagnostics = false)
         {
-            VerifyFix(LanguageNames.VisualBasic, GetBasicDiagnosticAnalyzer(), GetBasicCodeFixProvider(), oldSource, newSource, codeFixIndex, allowNewCompilerDiagnostics);
+            InvokeAndVerifyFix(
+                LanguageNames.VisualBasic, 
+                visualBasicAnalyzer, 
+                visualBasicCodeFixProvider, 
+                oldSource, 
+                newSource, 
+                codeFixIndex, 
+                allowNewCompilerDiagnostics);
         }
 
         /// <summary>
@@ -71,41 +80,52 @@ namespace UseNamedArguments.Tests
         /// <param name="newSource">A class in the form of a string after the CodeFix was applied to it</param>
         /// <param name="codeFixIndex">Index determining which codefix to apply if there are multiple</param>
         /// <param name="allowNewCompilerDiagnostics">A bool controlling whether or not the test will fail if the CodeFix introduces other warnings after being applied</param>
-        private void VerifyFix(string language, DiagnosticAnalyzer analyzer, CodeFixProvider codeFixProvider, string oldSource, string newSource, int? codeFixIndex, bool allowNewCompilerDiagnostics)
+        private static void InvokeAndVerifyFix(
+            string language, 
+            DiagnosticAnalyzer analyzer, 
+            CodeFixProvider codeFixProvider, 
+            string oldSource, 
+            string newSource, 
+            int? codeFixIndex, 
+            bool allowNewCompilerDiagnostics)
         {
-            var document = CreateDocument(oldSource, language);
-            var analyzerDiagnostics = GetSortedDiagnosticsFromDocuments(analyzer, new[] { document });
-            var compilerDiagnostics = GetCompilerDiagnostics(document);
+            var document = DocumentFactory.CreateDocument(oldSource, language);
+            var analyzerDiagnostics = analyzer.GetSortedDiagnosticsFromDocuments(new[] { document });
+            var compilerDiagnostics = document.GetCompilerDiagnostics();
             var attempts = analyzerDiagnostics.Length;
             
-            for (int i = 0; i < attempts; ++i)
+            for (var i = 0; i < attempts; ++i)
             {
                 var actions = new List<CodeAction>();
-                var context = new CodeFixContext(document, analyzerDiagnostics[0], (a, d) => actions.Add(a), CancellationToken.None);
-                codeFixProvider.RegisterCodeFixesAsync(context).Wait();
+                var context = new CodeFixContext(
+                    document, 
+                    analyzerDiagnostics[0], 
+                    registerCodeFix: (a, d) => actions.Add(a), 
+                    cancellationToken: CancellationToken.None);
 
+                codeFixProvider.RegisterCodeFixesAsync(context).Wait();
                 if (!actions.Any())
-                {
                     break;
-                }
 
                 if (codeFixIndex != null)
                 {
-                    document = ApplyFix(document, actions.ElementAt((int)codeFixIndex));
+                    document = document.ApplyFix(actions.ElementAt((int)codeFixIndex));
                     break;
                 }
 
-                document = ApplyFix(document, actions.ElementAt(0));
-                analyzerDiagnostics = GetSortedDiagnosticsFromDocuments(analyzer, new[] { document });
+                document = document.ApplyFix(actions.ElementAt(0));
+                analyzerDiagnostics = analyzer.GetSortedDiagnosticsFromDocuments(new[] { document });
 
-                var newCompilerDiagnostics = GetNewDiagnostics(compilerDiagnostics, GetCompilerDiagnostics(document));
+                var newCompilerDiagnostics = DiagnosticComparer.GetNewDiagnostics(
+                    compilerDiagnostics, 
+                    document.GetCompilerDiagnostics());
 
                 //check if applying the code fix introduced any new compiler diagnostics
                 if (!allowNewCompilerDiagnostics && newCompilerDiagnostics.Any())
                 {
                     // Format and get the compiler diagnostics again so that the locations make sense in the output
                     document = document.WithSyntaxRoot(Formatter.Format(document.GetSyntaxRootAsync().Result, Formatter.Annotation, document.Project.Solution.Workspace));
-                    newCompilerDiagnostics = GetNewDiagnostics(compilerDiagnostics, GetCompilerDiagnostics(document));
+                    newCompilerDiagnostics = DiagnosticComparer.GetNewDiagnostics(compilerDiagnostics, document.GetCompilerDiagnostics());
 
                     Assert.True(false,
                         string.Format("Fix introduced new compiler diagnostics:\r\n{0}\r\n\r\nNew document:\r\n{1}\r\n",
@@ -115,13 +135,11 @@ namespace UseNamedArguments.Tests
 
                 //check if there are analyzer diagnostics left after the code fix
                 if (!analyzerDiagnostics.Any())
-                {
                     break;
-                }
             }
 
             //after applying all of the code fixes, compare the resulting string to the inputted one
-            var actual = GetStringFromDocument(document);
+            var actual = document.ToSourceCode();
             Assert.Equal(newSource, actual);
         }
     }
