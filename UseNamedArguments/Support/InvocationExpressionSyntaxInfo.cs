@@ -9,6 +9,11 @@ namespace UseNamedArguments
 {
     internal class InvocationExpressionSyntaxInfo
     {
+        private static readonly IReadOnlyList<(
+            ITypeSymbol typeSymbol, 
+            List<ArgumentSyntaxAndParameterSymbol> arguments
+        )> NoArgumentsShouldBeNamed = new List<(ITypeSymbol, List<ArgumentSyntaxAndParameterSymbol>)>();
+
         public InvocationExpressionSyntaxInfo(
             IReadOnlyList<(
                 ITypeSymbol typeSymbol, 
@@ -26,32 +31,33 @@ namespace UseNamedArguments
         public static InvocationExpressionSyntaxInfo From(
             SemanticModel semanticModel,
             InvocationExpressionSyntax invocationExpressionSyntax)
-        { 
-            var argumentSyntaxesByType = new Dictionary<ITypeSymbol, List<ArgumentSyntaxAndParameterSymbol>>();
-            foreach (var argumentSyntax in invocationExpressionSyntax.ArgumentList.Arguments)
-            {
-                var argumentInfo = semanticModel.GetArgumentInfo(argumentSyntax);
-                if (argumentInfo.IsEmpty)
-                    throw new InvalidOperationException($"Could not find the corresponding parameter for [{argumentSyntax}]");
+        {
+            var argumentSyntaxes = invocationExpressionSyntax.ArgumentList.Arguments;
+            if (argumentSyntaxes.Count == 0)
+                return new InvocationExpressionSyntaxInfo(NoArgumentsShouldBeNamed);
 
-                if (!argumentSyntaxesByType.TryGetValue(argumentInfo.Parameter.Type, out var argumentSyntaxes))
-                {
-                    argumentSyntaxes = new List<ArgumentSyntaxAndParameterSymbol>();
-                    argumentSyntaxesByType.Add(argumentInfo.Parameter.Type, argumentSyntaxes);
-                }
+            var lastArgumentInfo = GetArgumentInfoOrThrow(semanticModel, argumentSyntaxes.Last());
+            if (lastArgumentInfo.Parameter.IsParams)
+                return new InvocationExpressionSyntaxInfo(NoArgumentsShouldBeNamed);
 
-                argumentSyntaxes.Add(
-                    new ArgumentSyntaxAndParameterSymbol(
-                        argumentSyntax, 
-                        argumentInfo.Parameter)
-                );
-            }
+            var argumentSyntaxesByTypes = GetArgumentsGroupedByType(semanticModel, argumentSyntaxes);
+            var argumentsWhichShouldBeNamed = GetArgumentsWhichShouldBeNamed(argumentSyntaxesByTypes);
 
+            var info = new InvocationExpressionSyntaxInfo(argumentsWhichShouldBeNamed);
+            return info;
+        }
+
+        private static List<(ITypeSymbol typeSymbol, List<ArgumentSyntaxAndParameterSymbol> arguments)>
+            GetArgumentsWhichShouldBeNamed(Dictionary<
+                ITypeSymbol, 
+                List<ArgumentSyntaxAndParameterSymbol>> argumentSyntaxesByTypes
+            )
+        {
             var argumentsWhichShouldBeNamedByType = new List<(
-                ITypeSymbol typeSymbol, 
+                ITypeSymbol typeSymbol,
                 List<ArgumentSyntaxAndParameterSymbol> arguments)>();
 
-            foreach (var argumentsOfSameType in argumentSyntaxesByType)
+            foreach (var argumentsOfSameType in argumentSyntaxesByTypes)
             {
                 if (argumentsOfSameType.Value.Count(it => it.Argument.NameColon == null) <= 1)
                     continue;
@@ -72,8 +78,53 @@ namespace UseNamedArguments
                 argumentsWhichShouldBeNamedByType.Add((argumentsOfSameType.Key, argumentsOfSameType.Value));
             }
 
-            var info = new InvocationExpressionSyntaxInfo(argumentsWhichShouldBeNamedByType);
-            return info;
+            return argumentsWhichShouldBeNamedByType;
+        }
+
+        private static Dictionary<
+            ITypeSymbol, 
+            List<ArgumentSyntaxAndParameterSymbol>> GetArgumentsGroupedByType(
+                SemanticModel semanticModel, 
+                SeparatedSyntaxList<ArgumentSyntax> argumentSyntaxes)
+        {
+            var argumentSyntaxesByTypes = new Dictionary<
+                ITypeSymbol,
+                List<ArgumentSyntaxAndParameterSymbol>>();
+
+            foreach (var argumentSyntax in argumentSyntaxes)
+            {
+                ArgumentInfo argumentInfo = GetArgumentInfoOrThrow(semanticModel, argumentSyntax);
+
+                if (!argumentSyntaxesByTypes.TryGetValue(
+                    argumentInfo.Parameter.Type,
+                    out var argumentSyntaxesOfType))
+                {
+                    argumentSyntaxesOfType = new List<ArgumentSyntaxAndParameterSymbol>();
+                    argumentSyntaxesByTypes.Add(argumentInfo.Parameter.Type, argumentSyntaxesOfType);
+                }
+
+                argumentSyntaxesOfType.Add(
+                    new ArgumentSyntaxAndParameterSymbol(
+                        argumentSyntax,
+                        argumentInfo.Parameter)
+                );
+            }
+
+            return argumentSyntaxesByTypes;
+        }
+
+        private static ArgumentInfo GetArgumentInfoOrThrow(
+            SemanticModel semanticModel, 
+            ArgumentSyntax argumentSyntax)
+        {
+            var argumentInfo = semanticModel.GetArgumentInfo(argumentSyntax);
+            if (argumentInfo.IsEmpty)
+            {
+                throw new InvalidOperationException(
+                    $"Could not find the corresponding parameter for [{argumentSyntax}]");
+            }
+
+            return argumentInfo;
         }
     }
 }
