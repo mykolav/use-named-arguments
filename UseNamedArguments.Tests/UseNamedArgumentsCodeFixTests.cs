@@ -51,10 +51,10 @@ namespace UseNamedArguments.Tests
                         void Bork()
                         {
                             Gork(
-                                ""Gizmo.cs"", 
+                                ""Gizmo.cs"",
 
 
-                                9000, 
+                                9000,
                                 1);
                         }
                     }
@@ -70,10 +70,10 @@ namespace UseNamedArguments.Tests
                         void Bork()
                         {
                             Gork(
-                                ""Gizmo.cs"", 
+                                ""Gizmo.cs"",
 
 
-                                line: 9000, 
+                                line: 9000,
                                 column: 1);
                         }
                     }

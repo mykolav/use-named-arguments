@@ -139,8 +139,9 @@ namespace UseNamedArguments.Tests.Support.CodeFix
             }
 
             //after applying all of the code fixes, compare the resulting string to the inputted one
-            var actual = document.ToSourceCode();
-            Assert.Equal(newSource, actual);
+            var expectedSource = newSource.Replace("\r\n", "\n");
+            var actualSource = document.ToSourceCode().Replace("\r\n", "\n");
+            Assert.Equal(expectedSource, actualSource);
         }
     }
 }

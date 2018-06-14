@@ -12,6 +12,20 @@ namespace UseNamedArguments.Support
     /// </summary>
     internal static class SemanticModelExtensions
     {
+        public static ArgumentInfo GetArgumentInfoOrThrow(
+            this SemanticModel semanticModel, 
+            ArgumentSyntax argumentSyntax)
+        {
+            var argumentInfo = semanticModel.GetArgumentInfo(argumentSyntax);
+            if (argumentInfo.IsEmpty)
+            {
+                throw new InvalidOperationException(
+                    $"Could not find the corresponding parameter for [{argumentSyntax}]");
+            }
+
+            return argumentInfo;
+        }
+
         public static ArgumentInfo GetArgumentInfo(this SemanticModel semanticModel, ArgumentSyntax argument)
         {
             if (semanticModel == null)

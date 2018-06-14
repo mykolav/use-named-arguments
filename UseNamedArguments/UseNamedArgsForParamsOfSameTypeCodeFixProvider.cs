@@ -81,11 +81,13 @@ namespace UseNamedArguments
                 var argumentInfo = semanticModel.GetArgumentInfoOrThrow(originalArgument);
                 if (argumentInfo.Parameter.Ordinal >= ordinalOfFirstNamedArgument)
                 { 
-                    newArgument = originalArgument.WithNameColon(
-                        SyntaxFactory.NameColon(
-                            argumentInfo.Parameter.Name.ToIdentifierName()
+                    newArgument = originalArgument
+                        .WithNameColon(
+                            SyntaxFactory.NameColon(
+                                argumentInfo.Parameter.Name.ToIdentifierName()
+                            )
                         )
-                    );
+                        .WithTriviaFrom(originalArgument);
                 }
 
                 newArgumentSyntaxes.Add(newArgument);
