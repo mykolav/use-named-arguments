@@ -6,33 +6,21 @@ namespace UseNamedArguments.Tests
     public class UseNamedArgumentsCodeFixTests
     {
         [Fact]
-        public void Method_with_same_type_params_invocation_with_positional_args_is_fixed_to_named_args()
+        public void Method_w_same_type_params_invocation_w_positional_args_is_fixed_to_named_args()
         {
             const string originalCodeSnippet = @"
-                namespace Frobnitz
+                void Gork(string fileName, int line, int column) {}
+                void Bork()
                 {
-                    class Wombat
-                    {
-                        void Gork(string fileName, int line, int column) {}
-                        void Bork()
-                        {
-                            Gork(""Gizmo.cs"", 9000, 1);
-                        }
-                    }
+                    Gork(""Gizmo.cs"", 9000, 1);
                 }
             ";
 
             const string fixedCodeSnippet = @"
-                namespace Frobnitz
+                void Gork(string fileName, int line, int column) {}
+                void Bork()
                 {
-                    class Wombat
-                    {
-                        void Gork(string fileName, int line, int column) {}
-                        void Bork()
-                        {
-                            Gork(""Gizmo.cs"", line: 9000, column: 1);
-                        }
-                    }
+                    Gork(""Gizmo.cs"", line: 9000, column: 1);
                 }
             ";
 
@@ -40,43 +28,31 @@ namespace UseNamedArguments.Tests
         }
 
         [Fact]
-        public void Method_with_same_type_params_invocation_with_positional_args_is_fixed_to_named_args_preserving_trivia()
+        public void Method_w_same_type_params_invocation_w_positional_args_is_fixed_to_named_args_preserving_trivia()
         {
             const string originalCodeSnippet = @"
-                namespace Frobnitz
+                void Gork(string fileName, int line, int column) {}
+                void Bork()
                 {
-                    class Wombat
-                    {
-                        void Gork(string fileName, int line, int column) {}
-                        void Bork()
-                        {
-                            Gork(
-                                ""Gizmo.cs"",
+                    Gork(
+                        ""Gizmo.cs"",
 
 
-                                9000,
-                                1);
-                        }
-                    }
+                        9000,
+                        1);
                 }
             ";
 
             const string fixedCodeSnippet = @"
-                namespace Frobnitz
+                void Gork(string fileName, int line, int column) {}
+                void Bork()
                 {
-                    class Wombat
-                    {
-                        void Gork(string fileName, int line, int column) {}
-                        void Bork()
-                        {
-                            Gork(
-                                ""Gizmo.cs"",
+                    Gork(
+                        ""Gizmo.cs"",
 
 
-                                line: 9000,
-                                column: 1);
-                        }
-                    }
+                        line: 9000,
+                        column: 1);
                 }
             ";
 
@@ -84,33 +60,21 @@ namespace UseNamedArguments.Tests
         }
 
         [Fact]
-        public void Method_with_first_two_params_of_same_type_and_third_param_of_another_type_invocation_with_positional_args_is_fixed_to_named_args()
+        public void Method_w_first_2_params_of_same_type_and_3rd_param_of_another_type_invocation_w_positional_args_is_fixed_to_named_args()
         {
             const string originalCodeSnippet = @"
-                namespace Frobnitz
+                void Gork(int line, int column, string fileName) {}
+                void Bork()
                 {
-                    class Wombat
-                    {
-                        void Gork(int line, int column, string fileName) {}
-                        void Bork()
-                        {
-                            Gork(9000, 1, ""Gizmo.cs"");
-                        }
-                    }
+                    Gork(9000, 1, ""Gizmo.cs"");
                 }
             ";
 
             const string fixedCodeSnippet = @"
-                namespace Frobnitz
+                void Gork(int line, int column, string fileName) {}
+                void Bork()
                 {
-                    class Wombat
-                    {
-                        void Gork(int line, int column, string fileName) {}
-                        void Bork()
-                        {
-                            Gork(line: 9000, column: 1, fileName: ""Gizmo.cs"");
-                        }
-                    }
+                    Gork(line: 9000, column: 1, fileName: ""Gizmo.cs"");
                 }
             ";
 
@@ -118,33 +82,87 @@ namespace UseNamedArguments.Tests
         }
 
         [Fact]
-        public void Method_with_first_and_third_params_of_same_type_and_second_param_of_another_type_invocation_with_positional_args_is_fixed_to_named_args()
+        public void Method_w_1st_and_3rd_params_of_same_type_and_2nd_param_of_another_type_invocation_w_positional_args_is_fixed_to_named_args()
         {
             const string originalCodeSnippet = @"
-                namespace Frobnitz
+                void Gork(int line, string fileName, int column) {}
+                void Bork()
                 {
-                    class Wombat
-                    {
-                        void Gork(int line, string fileName, int column) {}
-                        void Bork()
-                        {
-                            Gork(9000, ""Gizmo.cs"", 1);
-                        }
-                    }
+                    Gork(9000, ""Gizmo.cs"", 1);
                 }
             ";
 
             const string fixedCodeSnippet = @"
-                namespace Frobnitz
+                void Gork(int line, string fileName, int column) {}
+                void Bork()
                 {
-                    class Wombat
-                    {
-                        void Gork(int line, string fileName, int column) {}
-                        void Bork()
-                        {
-                            Gork(line: 9000, fileName: ""Gizmo.cs"", column: 1);
-                        }
-                    }
+                    Gork(line: 9000, fileName: ""Gizmo.cs"", column: 1);
+                }
+            ";
+
+            UseNamedArgsCSharpCodeFixRunner.InvokeAndVerifyResult(originalCodeSnippet, fixedCodeSnippet);
+        }
+
+        [Fact]
+        public void Method_w_3_params_of_same_type_invocation_w_1st_arg_named_and_2_positional_args_is_fixed_to_named_args()
+        {
+            const string originalCodeSnippet = @"
+                void Gork(string foo, string bar, string baz) {}
+                void Bork()
+                {
+                    Gork(foo: ""pupper"", ""doggo"", ""woofer"");
+                }
+            ";
+
+            const string fixedCodeSnippet = @"
+                void Gork(string foo, string bar, string baz) {}
+                void Bork()
+                {
+                    Gork(foo: ""pupper"", bar: ""doggo"", baz: ""woofer"");
+                }
+            ";
+
+            UseNamedArgsCSharpCodeFixRunner.InvokeAndVerifyResult(originalCodeSnippet, fixedCodeSnippet);
+        }
+
+        [Fact]
+        public void Method_w_3_params_of_same_type_invocation_w_2nd_arg_named_and_2_positional_args_is_fixed_to_named_args()
+        {
+            const string originalCodeSnippet = @"
+                void Gork(string foo, string bar, string baz) {}
+                void Bork()
+                {
+                    Gork(""pupper"", bar: ""doggo"", ""woofer"");
+                }
+            ";
+
+            const string fixedCodeSnippet = @"
+                void Gork(string foo, string bar, string baz) {}
+                void Bork()
+                {
+                    Gork(foo: ""pupper"", bar: ""doggo"", baz: ""woofer"");
+                }
+            ";
+
+            UseNamedArgsCSharpCodeFixRunner.InvokeAndVerifyResult(originalCodeSnippet, fixedCodeSnippet);
+        }
+
+        [Fact]
+        public void Method_w_3_params_of_same_type_invocation_w_3rd_arg_named_and_2_positional_args_is_fixed_to_named_args()
+        {
+            const string originalCodeSnippet = @"
+                void Gork(string foo, string bar, string baz) {}
+                void Bork()
+                {
+                    Gork(""pupper"", ""doggo"", baz: ""woofer"");
+                }
+            ";
+
+            const string fixedCodeSnippet = @"
+                void Gork(string foo, string bar, string baz) {}
+                void Bork()
+                {
+                    Gork(foo: ""pupper"", bar: ""doggo"", baz: ""woofer"");
                 }
             ";
 
