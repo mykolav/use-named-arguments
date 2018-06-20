@@ -4,6 +4,12 @@ using Xunit;
 
 namespace UseNamedArguments.Tests
 {
+    // TODO: Delegate. class C { void M(System.Action<int, int> f) => f(1, 2);
+    // TODO: Indexer. class C { int this[int arg1, int arg2] => this[1, 2]; }
+    // TODO: `this` ctor initializer. class C { C(int arg1, int arg2) {} C() : this(1, 2) {} }
+    // TODO: `base` ctor initializer. class C { public C(int arg1, int arg2) {} } class D : C { D() : base(1, 2) {} }
+    // TODO: ctor. class C { C(int arg1, int arg2) { new C(1, 2); } }
+    // TODO: Attribute's parameters and properties?
     public class UseNamedArgumentsAnalyzerTests
     {
         [Fact]
