@@ -26,6 +26,10 @@ namespace UseNamedArguments.Support
             return argumentInfo;
         }
 
+        /// <summary>
+        /// To be able to convert positional arguments to named we need to find
+        /// corresponding <see cref="IParameterSymbol" /> for each argument.
+        /// </summary>
         public static ArgumentInfo GetArgumentInfo(this SemanticModel semanticModel, ArgumentSyntax argument)
         {
             if (semanticModel == null)

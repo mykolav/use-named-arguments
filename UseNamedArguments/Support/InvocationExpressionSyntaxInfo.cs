@@ -7,6 +7,20 @@ using UseNamedArguments.Support;
 
 namespace UseNamedArguments
 {
+    /// <summary>
+    /// This class contains code to look at an invocation expression and its arguments
+    /// and decide whether the arguments should be named.
+    /// The rules are:
+    ///   - If a method or ctor has a number of parameters of the same type 
+    ///     the invocation's corresponding arguments should be named;
+    ///   - If named arguments are used for all but one parameter of the same type
+    ///     the analyzer doesn't emit the diagnostic;
+    ///   - If the last parameter is <see langword="params" />, the analyzer
+    ///     doesn't emit the diagnostic, as we cannot use named arguments in this case.
+    /// It's used by both 
+    ///   - the <see cref="UseNamedArgsForParamsOfSameTypeAnalyzer"/> class and
+    ///   - the <see cref="UseNamedArgsForParamsOfSameTypeCodeFixProvider"/> class.
+    /// </summary>
     internal class InvocationExpressionSyntaxInfo
     {
         private static readonly IReadOnlyList<(
@@ -28,6 +42,17 @@ namespace UseNamedArguments
                     List<ArgumentSyntaxAndParameterSymbol> arguments
                )> ArgumentsWhichShouldBeNamed { get; }
 
+        /// <summary>
+        /// This method analyzes the supplied <paramref name="invocationExpressionSyntax" />
+        /// to see if any of the arguments need to be named.
+        /// </summary>
+        /// <param name="semanticModel">The semantic model is necessary for the analysis</param>
+        /// <param name="invocationExpressionSyntax">The invocation to analyze</param>
+        /// <returns>
+        /// An instance of <see cref="InvocationExpressionSyntaxInfo" /> containing
+        /// info <see cref="ArgumentSyntaxAndParameterSymbol" /> about arguments that should be named 
+        /// grouped by their types.
+        /// </returns>
         public static InvocationExpressionSyntaxInfo From(
             SemanticModel semanticModel,
             InvocationExpressionSyntax invocationExpressionSyntax)

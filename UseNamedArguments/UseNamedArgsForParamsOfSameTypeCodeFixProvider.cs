@@ -23,6 +23,8 @@ namespace UseNamedArguments
         private const string title = "Use named args for params of same type";
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(
+            // This tells the infrastructure that this code-fix provider corresponds to
+            // the `UseNamedArgsForParamsOfSameTypeAnalyzer` analyzer.
             UseNamedArgsForParamsOfSameTypeAnalyzer.DiagnosticId
         );
 
@@ -63,10 +65,17 @@ namespace UseNamedArguments
             CancellationToken cancellationToken)
         {
             var semanticModel = await document.GetSemanticModelAsync();
+
+            // Figure out which exactly arguments should be converted from positional to named.
             var invocationExpressionSyntaxInfo = InvocationExpressionSyntaxInfo.From(
                 semanticModel,
                 invocationExpressionSyntax);
 
+            // In case we have a diagnostic to get fixed, we still 
+            // don't want to force all the invocation's arguments to be named --
+            // it's up to the coder to decide on that.
+            // What we do is finding the leftmost argument that should be named
+            // and start named arguments from there.
             var ordinalOfFirstNamedArgument = invocationExpressionSyntaxInfo
                 .ArgumentsWhichShouldBeNamed
                 .SelectMany(argumentsByType => argumentsByType.arguments)
@@ -79,6 +88,8 @@ namespace UseNamedArguments
                 var newArgument = originalArgument;
 
                 var argumentInfo = semanticModel.GetArgumentInfoOrThrow(originalArgument);
+                // Any argument to the right of the first named argument,
+                // should be named too -- otherwise the code won't compile.
                 if (argumentInfo.Parameter.Ordinal >= ordinalOfFirstNamedArgument)
                 { 
                     newArgument = originalArgument
@@ -87,6 +98,7 @@ namespace UseNamedArguments
                                 argumentInfo.Parameter.Name.ToIdentifierName()
                             )
                         )
+                        // Preserve whitespaces, etc. from the original code.
                         .WithTriviaFrom(originalArgument);
                 }
 
@@ -98,6 +110,8 @@ namespace UseNamedArguments
                 originalArgumentList.Arguments.GetSeparators());
 
             var newArgumentList = originalArgumentList.WithArguments(newArguments);
+            // An argument list is an "addressable" syntax element, that we can directly
+            // replace in the document's root.
             var newRoot = root.ReplaceNode(originalArgumentList, newArgumentList);
 
             return document.WithSyntaxRoot(newRoot);

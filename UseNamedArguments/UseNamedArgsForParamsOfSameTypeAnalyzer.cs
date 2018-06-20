@@ -44,6 +44,9 @@ namespace UseNamedArguments
 
         public override void Initialize(AnalysisContext context)
         {
+            // Register ourself to get invoked to analyze 
+            //   - invocation expressions; e. g., calling a method. 
+            //   - and object creation expressions; e. g., invoking a constructor.
             context.RegisterSyntaxNodeAction(
                 AnalyzeInvocationOrObjectCreationExpressionNode,
                 SyntaxKind.InvocationExpression,
@@ -59,6 +62,7 @@ namespace UseNamedArguments
             if (methodSymbol == null)
                 return;
 
+            // So far we only support analyzing of the three kinds of methods listed below.
             if (!methodSymbol.MethodKind.In(
                     MethodKind.Ordinary, 
                     MethodKind.Constructor, 
@@ -67,13 +71,20 @@ namespace UseNamedArguments
                 return;
             }
 
+            // We got a supported kind of method.
+            // Delegate heavy-lifting to the call below.
             var invocationExpressionSyntaxInfo = InvocationExpressionSyntaxInfo.From(
                 semanticModel,
                 invocationExpressionSyntax);
 
+            // We inspected the arguments of invocation expression.
+            // If none of them should be named or, maybe, they already are named,
+            // we have nothing more to do. Just return control to the calling code then.
             if (!invocationExpressionSyntaxInfo.ArgumentsWhichShouldBeNamed.Any())
                 return;
 
+            // There are arguments that should be named.
+            // Prepare the diagnositc's message.
             var sbArgumentsOfSameTypeDescriptions = new StringBuilder();
             var argumentsOfSameTypeSeparator = "";
             foreach (var argumentsOfSameType in 
@@ -90,6 +101,7 @@ namespace UseNamedArguments
                 argumentsOfSameTypeSeparator = " and ";
             }
 
+            // And finally, emit the diagnostic.
             context.ReportDiagnostic(
                 Diagnostic.Create(
                     Rule, 
