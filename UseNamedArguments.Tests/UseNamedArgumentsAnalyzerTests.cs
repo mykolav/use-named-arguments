@@ -12,20 +12,26 @@ namespace UseNamedArguments.Tests
     // TODO: Attribute's parameters and properties?
     public class UseNamedArgumentsAnalyzerTests
     {
+        private static class Expect
+        {
+            /// <summary>
+            /// No diagnostics expected to show up for <paramref name="codeSnippet" />
+            /// </summary>
+            public static void EmptyDiagnosticsFor(string codeSnippet)
+            {
+                var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
+                UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(codeSnippet, emptyExpectedDiagnostics);
+            }
+        }
+
         [Fact]
         public void Empty_code_does_not_trigger_diagnostic()
-        {
-            const string testCodeSnippet = @"";
-
-            //No diagnostics expected to show up
-            var emptyExpectedDiagnostics = new DiagnosticResult[] { };
-            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
-        }
+            => Expect.EmptyDiagnosticsFor(@"");
 
         [Fact]
         public void Method_with_zero_args_does_not_trigger_diagnostic()
         {
-            var testCodeSnippet = @"
+            const string testCodeSnippet = @"
                 namespace Frobnitz
                 {
                     class Wombat
@@ -39,15 +45,13 @@ namespace UseNamedArguments.Tests
                 }
             ";
 
-            //No diagnostics expected to show up
-            var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
-            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            Expect.EmptyDiagnosticsFor(testCodeSnippet);
         }
 
         [Fact]
         public void Method_with_one_param_does_not_trigger_diagnostic()
         {
-            var testCodeSnippet = @"
+            const string testCodeSnippet = @"
                 namespace Frobnitz
                 {
                     class Wombat
@@ -61,15 +65,13 @@ namespace UseNamedArguments.Tests
                 }
             ";
 
-            //No diagnostics expected to show up
-            var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
-            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            Expect.EmptyDiagnosticsFor(testCodeSnippet);
         }
 
         [Fact]
         public void Method_with_variable_number_of_params_does_not_trigger_diagnostic()
         {
-            var testCodeSnippet = @"
+            const string testCodeSnippet = @"
                 namespace Frobnitz`
                 {
                     class Wombat
@@ -83,9 +85,7 @@ namespace UseNamedArguments.Tests
                 }
             ";
 
-            //No diagnostics expected to show up
-            var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
-            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            Expect.EmptyDiagnosticsFor(testCodeSnippet);
         }
 
         [Fact]
@@ -105,8 +105,7 @@ namespace UseNamedArguments.Tests
                 }
             ";
 
-            var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
-            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            Expect.EmptyDiagnosticsFor(testCodeSnippet);
         }
 
         [Fact]
@@ -128,8 +127,7 @@ namespace UseNamedArguments.Tests
                 }
             ";
 
-            var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
-            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            Expect.EmptyDiagnosticsFor(testCodeSnippet);
         }
 
         [Fact]
@@ -149,8 +147,7 @@ namespace UseNamedArguments.Tests
                 }
             ";
 
-            var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
-            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            Expect.EmptyDiagnosticsFor(testCodeSnippet);
         }
 
         [Fact]
@@ -170,8 +167,7 @@ namespace UseNamedArguments.Tests
                 }
             ";
 
-            var emptyExpectedDiagnostics = UseNamedArgumentsDiagnosticResult.EmptyExpectedDiagnostics;
-            UseNamedArgsCSharpAnalyzerRunner.InvokeAndVerifyDiagnostic(testCodeSnippet, emptyExpectedDiagnostics);
+            Expect.EmptyDiagnosticsFor(testCodeSnippet);
         }
 
         [Fact]

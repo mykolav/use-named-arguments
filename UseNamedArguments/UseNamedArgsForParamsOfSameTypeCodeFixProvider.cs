@@ -8,7 +8,6 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Collections.Generic;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using UseNamedArguments.Support;
 
@@ -64,57 +63,55 @@ namespace UseNamedArguments
             InvocationExpressionSyntax invocationExpressionSyntax,
             CancellationToken cancellationToken)
         {
-            var semanticModel = await document.GetSemanticModelAsync();
+            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
 
             // Figure out which exactly arguments should be converted from positional to named.
-            var invocationExpressionSyntaxInfo = InvocationExpressionSyntaxInfo.From(
-                semanticModel,
-                invocationExpressionSyntax);
+            var argsWhichShouldBeNamed = semanticModel.GetArgumentsWhichShouldBeNamed(invocationExpressionSyntax);
 
             // In case we have a diagnostic to get fixed, we still 
             // don't want to force all the invocation's arguments to be named --
             // it's up to the coder to decide on that.
             // What we do is finding the leftmost argument that should be named
             // and start named arguments from there.
-            var ordinalOfFirstNamedArgument = invocationExpressionSyntaxInfo
-                .ArgumentsWhichShouldBeNamed
-                .SelectMany(argumentsByType => argumentsByType.arguments)
+            var ordinalOfFirstNamedArgument = argsWhichShouldBeNamed
+                .SelectMany(argumentsOfType => argumentsOfType.Arguments)
                 .Min(argAndParam => argAndParam.Parameter.Ordinal);
 
-            var originalArgumentList = invocationExpressionSyntax.ArgumentList;
-            var newArgumentSyntaxes = new List<ArgumentSyntax>();
-            foreach (var originalArgument in originalArgumentList.Arguments)
+            ArgumentSyntax MaybeNameArgument(ArgumentSyntax originalArgument)
             {
-                var newArgument = originalArgument;
-
-                var argumentInfo = semanticModel.GetArgumentInfoOrThrow(originalArgument);
+                var paramInfo = semanticModel.GetParameterInfoOrThrow(originalArgument);
                 // Any argument to the right of the first named argument,
                 // should be named too -- otherwise the code won't compile.
-                if (argumentInfo.Parameter.Ordinal >= ordinalOfFirstNamedArgument)
-                { 
-                    newArgument = originalArgument
-                        .WithNameColon(
-                            SyntaxFactory.NameColon(
-                                argumentInfo.Parameter.Name.ToIdentifierName()
-                            )
-                        )
-                        // Preserve whitespaces, etc. from the original code.
-                        .WithTriviaFrom(originalArgument);
-                }
+                if (paramInfo.Parameter.Ordinal < ordinalOfFirstNamedArgument) 
+                    return originalArgument;
 
-                newArgumentSyntaxes.Add(newArgument);
+                var namedArgument = originalArgument
+                    .WithNameColon(
+                        SyntaxFactory.NameColon(
+                            paramInfo.Parameter.Name.ToIdentifierName()
+                        )
+                    )
+                     // Preserve whitespaces, etc. from the original code.
+                    .WithTriviaFrom(originalArgument);
+
+                return namedArgument;
             }
 
+            var originalArgumentList = invocationExpressionSyntax.ArgumentList;
+            var namedArgumentSyntaxes = originalArgumentList.Arguments.Select(it => MaybeNameArgument(it));
+
             var newArguments = SyntaxFactory.SeparatedList(
-                newArgumentSyntaxes,
+                namedArgumentSyntaxes,
                 originalArgumentList.Arguments.GetSeparators());
 
-            var newArgumentList = originalArgumentList.WithArguments(newArguments);
             // An argument list is an "addressable" syntax element, that we can directly
             // replace in the document's root.
-            var newRoot = root.ReplaceNode(originalArgumentList, newArgumentList);
-
-            return document.WithSyntaxRoot(newRoot);
+            return document.WithSyntaxRoot(
+                root.ReplaceNode(
+                    originalArgumentList, 
+                    originalArgumentList.WithArguments(newArguments)
+                )
+            );
         }
     }
 }

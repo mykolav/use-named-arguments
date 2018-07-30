@@ -6,12 +6,12 @@ namespace UseNamedArguments.Support
     /// Borrowed from https://github.com/DustinCampbell/CSharpEssentials/blob/master/Source/CSharpEssentials/Extensions.cs#L45-L137
     /// Also see https://github.com/dotnet/roslyn/issues/6831
     /// </summary>
-    internal struct ArgumentInfo
+    internal struct ParameterInfo
     {
         public readonly ISymbol MethodOrProperty;
         public readonly IParameterSymbol Parameter;
 
-        public ArgumentInfo(ISymbol methodOrProperty, IParameterSymbol parameter)
+        public ParameterInfo(ISymbol methodOrProperty, IParameterSymbol parameter)
         {
             MethodOrProperty = methodOrProperty;
             Parameter = parameter;

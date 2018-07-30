@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
@@ -73,33 +74,17 @@ namespace UseNamedArguments
 
             // We got a supported kind of method.
             // Delegate heavy-lifting to the call below.
-            var invocationExpressionSyntaxInfo = InvocationExpressionSyntaxInfo.From(
-                semanticModel,
-                invocationExpressionSyntax);
+            var argsWhichShouldBeNamed = semanticModel.GetArgumentsWhichShouldBeNamed(invocationExpressionSyntax);
 
             // We inspected the arguments of invocation expression.
             // If none of them should be named or, maybe, they already are named,
             // we have nothing more to do. Just return control to the calling code then.
-            if (!invocationExpressionSyntaxInfo.ArgumentsWhichShouldBeNamed.Any())
+            if (!argsWhichShouldBeNamed.Any())
                 return;
 
             // There are arguments that should be named.
             // Prepare the diagnositc's message.
-            var sbArgumentsOfSameTypeDescriptions = new StringBuilder();
-            var argumentsOfSameTypeSeparator = "";
-            foreach (var argumentsOfSameType in 
-                invocationExpressionSyntaxInfo.ArgumentsWhichShouldBeNamed)
-            {
-                var argumentsOfSameTypeDescription = string.Join(
-                    ", ", 
-                    argumentsOfSameType.arguments.Select(it => $"'{it.Parameter.Name}'"));
-
-                sbArgumentsOfSameTypeDescriptions
-                    .Append(argumentsOfSameTypeSeparator)
-                    .Append(argumentsOfSameTypeDescription);
-
-                argumentsOfSameTypeSeparator = " and ";
-            }
+            var argumentsOfSameTypeDescriptions = FormatDiagnosticMessage(argsWhichShouldBeNamed);
 
             // And finally, emit the diagnostic.
             context.ReportDiagnostic(
@@ -108,9 +93,30 @@ namespace UseNamedArguments
                     invocationExpressionSyntax.GetLocation(), 
                     messageArgs: new object[] {
                         methodSymbol.Name, 
-                        sbArgumentsOfSameTypeDescriptions.ToString()
+                        argumentsOfSameTypeDescriptions
                     })
             );
+        }
+
+        private static string FormatDiagnosticMessage(IEnumerable<ArgumentsOfType> argsWhichShouldBeNamed)
+        {
+            var sbArgumentsOfSameTypeDescriptions = new StringBuilder();
+            var argumentsOfSameTypeSeparator = "";
+            foreach (var argumentsOfSameType in argsWhichShouldBeNamed)
+            {
+                var argumentsOfSameTypeDescription = string.Join(
+                    ", ",
+                    argumentsOfSameType.Arguments.Select(it => $"'{it.Parameter.Name}'"));
+
+                sbArgumentsOfSameTypeDescriptions
+                    .Append(argumentsOfSameTypeSeparator)
+                    .Append(argumentsOfSameTypeDescription);
+
+                argumentsOfSameTypeSeparator = " and ";
+            }
+
+            var description = sbArgumentsOfSameTypeDescriptions.ToString();
+            return description;
         }
     }
 }

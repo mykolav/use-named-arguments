@@ -17,5 +17,9 @@ namespace UseNamedArguments
 
         public ArgumentSyntax Argument { get; }
         public IParameterSymbol Parameter { get; }
+
+        public bool IsArgumentAndParameterNamesSame()
+            => Argument.Expression is IdentifierNameSyntax idNameSyntax &&
+               Parameter.Name == idNameSyntax.Identifier.ValueText;
     }
 }

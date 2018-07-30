@@ -10,9 +10,9 @@ namespace UseNamedArguments.Support
     /// Borrowed from https://github.com/DustinCampbell/CSharpEssentials/blob/master/Source/CSharpEssentials/Extensions.cs#L45-L137
     /// Also see https://github.com/dotnet/roslyn/issues/6831
     /// </summary>
-    internal static class SemanticModelExtensions
+    internal static class ParameterInfoExtensions
     {
-        public static ArgumentInfo GetArgumentInfoOrThrow(
+        public static ParameterInfo GetParameterInfoOrThrow(
             this SemanticModel semanticModel, 
             ArgumentSyntax argumentSyntax)
         {
@@ -30,7 +30,7 @@ namespace UseNamedArguments.Support
         /// To be able to convert positional arguments to named we need to find
         /// corresponding <see cref="IParameterSymbol" /> for each argument.
         /// </summary>
-        public static ArgumentInfo GetArgumentInfo(this SemanticModel semanticModel, ArgumentSyntax argument)
+        public static ParameterInfo GetArgumentInfo(this SemanticModel semanticModel, ArgumentSyntax argument)
         {
             if (semanticModel == null)
                 throw new ArgumentNullException(nameof(semanticModel));
@@ -41,30 +41,30 @@ namespace UseNamedArguments.Support
             var argumentList = argument.Parent as ArgumentListSyntax;
             var expression = argumentList?.Parent as ExpressionSyntax;
             if (expression == null)
-                return default(ArgumentInfo);
+                return default(ParameterInfo);
 
             var methodOrProperty = semanticModel.GetSymbolInfo(expression).Symbol;
             if (methodOrProperty == null)
-                return default(ArgumentInfo);
+                return default(ParameterInfo);
 
             var parameters = methodOrProperty.GetParameters();
             if (parameters.Length == 0)
-                return default(ArgumentInfo);
+                return default(ParameterInfo);
 
             if (argument.NameColon != null)
             {
                 if (argument.NameColon.Name == null)
-                    return default(ArgumentInfo);
+                    return default(ParameterInfo);
 
                 // We've got a named argument...
                 var nameText = argument.NameColon.Name.Identifier.ValueText;
                 if (nameText == null)
-                    return default(ArgumentInfo);
+                    return default(ParameterInfo);
 
                 foreach (var parameter in parameters)
                 {
                     if (string.Equals(parameter.Name, nameText, StringComparison.Ordinal))
-                        return new ArgumentInfo(methodOrProperty, parameter);
+                        return new ParameterInfo(methodOrProperty, parameter);
                 }
             }
             else
@@ -72,19 +72,19 @@ namespace UseNamedArguments.Support
                 // Positional argument...
                 var index = argumentList.Arguments.IndexOf(argument);
                 if (index < 0)
-                    return default(ArgumentInfo);
+                    return default(ParameterInfo);
 
                 if (index < parameters.Length)
-                    return new ArgumentInfo(methodOrProperty, parameters[index]);
+                    return new ParameterInfo(methodOrProperty, parameters[index]);
 
                 if (index >= parameters.Length &&
                     parameters[parameters.Length - 1].IsParams)
                 {
-                    return new ArgumentInfo(methodOrProperty, parameters[parameters.Length - 1]);
+                    return new ParameterInfo(methodOrProperty, parameters[parameters.Length - 1]);
                 }
             }
 
-            return default(ArgumentInfo);
+            return default(ParameterInfo);
         }
 
         private static ImmutableArray<IParameterSymbol> GetParameters(this ISymbol symbol)
