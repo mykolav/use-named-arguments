@@ -87,9 +87,7 @@ namespace UseNamedArguments
 
                 var namedArgument = originalArgument
                     .WithNameColon(
-                        SyntaxFactory.NameColon(
-                            paramInfo.Parameter.Name.ToIdentifierName()
-                        )
+                        SyntaxFactory.NameColon(paramInfo.Parameter.Name)
                     )
                      // Preserve whitespaces, etc. from the original code.
                     .WithTriviaFrom(originalArgument);

@@ -1,7 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace UseNamedArguments
+namespace UseNamedArguments.Support
 {
     /// <summary>
     /// A container of an <see cref="ArgumentSyntax" /> and

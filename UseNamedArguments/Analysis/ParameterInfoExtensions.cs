@@ -39,27 +39,23 @@ namespace UseNamedArguments.Support
                 throw new ArgumentNullException(nameof(argument));
 
             var argumentList = argument.Parent as ArgumentListSyntax;
-            var expression = argumentList?.Parent as ExpressionSyntax;
-            if (expression == null)
-                return default(ParameterInfo);
+            if (!(argumentList?.Parent is ExpressionSyntax expression))
+                return default;
 
             var methodOrProperty = semanticModel.GetSymbolInfo(expression).Symbol;
             if (methodOrProperty == null)
-                return default(ParameterInfo);
+                return default;
 
             var parameters = methodOrProperty.GetParameters();
             if (parameters.Length == 0)
-                return default(ParameterInfo);
+                return default;
 
             if (argument.NameColon != null)
             {
-                if (argument.NameColon.Name == null)
-                    return default(ParameterInfo);
-
                 // We've got a named argument...
-                var nameText = argument.NameColon.Name.Identifier.ValueText;
+                var nameText = argument.NameColon.Name?.Identifier.ValueText;
                 if (nameText == null)
-                    return default(ParameterInfo);
+                    return default;
 
                 foreach (var parameter in parameters)
                 {
@@ -72,7 +68,7 @@ namespace UseNamedArguments.Support
                 // Positional argument...
                 var index = argumentList.Arguments.IndexOf(argument);
                 if (index < 0)
-                    return default(ParameterInfo);
+                    return default;
 
                 if (index < parameters.Length)
                     return new ParameterInfo(methodOrProperty, parameters[index]);
@@ -84,7 +80,7 @@ namespace UseNamedArguments.Support
                 }
             }
 
-            return default(ParameterInfo);
+            return default;
         }
 
         private static ImmutableArray<IParameterSymbol> GetParameters(this ISymbol symbol)
