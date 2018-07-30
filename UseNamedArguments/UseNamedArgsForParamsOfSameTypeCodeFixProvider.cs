@@ -104,7 +104,7 @@ namespace UseNamedArguments
                 namedArgumentSyntaxes,
                 originalArgumentList.Arguments.GetSeparators());
 
-            // An argument list is an "addressable" syntax element, that we can directly
+            // An argument list is an "addressable" syntax element that we can directly
             // replace in the document's root.
             return document.WithSyntaxRoot(
                 root.ReplaceNode(
